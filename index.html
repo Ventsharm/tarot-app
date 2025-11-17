@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tarot Card Reader</title>
+
+  <!-- PWA -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4c1d95" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #f5f3ff, #ede9fe);
+      margin: 0;
+      padding: 0;
+      color: #1f2933;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-size: 2rem;
+      color: #4c1d95;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      color: #4b5563;
+    }
+
+    .deck-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .deck {
+      width: 80px;
+      height: 120px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .deck::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 8px;
+      border: 2px dashed rgba(255,255,255,0.5);
+    }
+
+    .deck.shuffling {
+      animation: shuffle 0.6s infinite;
+    }
+
+    @keyframes shuffle {
+      0%   { transform: translateX(0) rotate(0); }
+      25%  { transform: translateX(-5px) rotate(-3deg); }
+      50%  { transform: translateX(5px) rotate(3deg); }
+      100% { transform: translateX(0) rotate(0); }
+    }
+
+    .status {
+      min-height: 20px;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    button {
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: none;
+      background: #8b5cf6;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(139,92,246,0.5);
+      transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #7c3aed;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(139,92,246,0.6);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .spread {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 25px;
+      margin-bottom: 30px;
+    }
+
+    .card-slot {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      text-align: left;
+    }
+
+    .card-slot h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      color: #4c1d95;
+    }
+
+    .tarot-image {
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: linear-gradient(135deg,#e0f2fe,#ecfeff);
+      margin-bottom: 8px;
+    }
+
+    .card-name {
+      font-weight: 600;
+      margin: 4px 0;
+      color: #111827;
+    }
+
+    .card-position {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin: 2px 0 6px;
+    }
+
+    .card-meaning,
+    .card-narrative {
+      font-size: 0.92rem;
+      line-height: 1.4;
+      color: #374151;
+    }
+
+    .card-narrative {
+      margin-top: 6px;
+      font-style: italic;
+      color: #4b5563;
+    }
+
+    .section-title {
+      text-align: left;
+      max-width: 1000px;
+      margin: 0 auto 8px;
+      font-size: 1.1rem;
+      color: #4c1d95;
+    }
+
+    .history-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto 6px;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .history-controls button {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      box-shadow: none;
+    }
+
+    .history-list {
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .history-item {
+      background: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .history-header {
+      font-size: 0.86rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .history-body {
+      font-size: 0.9rem;
+      color: #111827;
+    }
+
+    .history-body span.position {
+      font-weight: 600;
+      color: #4c1d95;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+
+    @media (max-width: 600px) {
+      .card-slot {
+        font-size: 0.9rem;
+      }
+      h1 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Tarot Card Reader</h1>
+    <p class="subtitle">
+      Tap “Draw Past / Present / Future” to get a 3-card tarot spread with upright or reversed meanings.
+    </p>
+
+    <div class="deck-area">
+      <div id="deck" class="deck"></div>
+      <button id="draw-button">Draw Past / Present / Future</button>
+      <div id="status" class="status"></div>
+    </div>
+
+    <!-- Current spread -->
+    <div class="spread" id="spread">
+      <div class="card-slot">
+        <h2>Past</h2>
+        <img id="past-image" class="tarot-image" alt="Past card" />
+        <div id="past-name" class="card-name"></div>
+        <div id="past-position" class="card-position"></div>
+        <div id="past-meaning" class="card-meaning"></div>
+        <div id="past-narrative" class="card-narrative"></div>
+      </div>
+      <div class="card-slot">
+        <h2>Present</h2>
+        <img id="present-image" class="tarot-image" alt="Present card" />
+        <div id="present-name" class="card-name"></div>
+        <div id="present-position" class="card-position"></div>
+        <div id="present-meaning" class="card-meaning"></div>
+        <div id="present-narrative" class="card-narrative"></div>
+      </div>
+      <div class="card-slot">
+        <h2>Future</h2>
+        <img id="future-image" class="tarot-image" alt="Future card" />
+        <div id="future-name" class="card-name"></div>
+        <div id="future-position" class="card-position"></div>
+        <div id="future-meaning" class="card-meaning"></div>
+        <div id="future-narrative" class="card-narrative"></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Reading history</h2>
+    <div class="history-controls">
+      <span>Saved on this device using localStorage.</span>
+      <button id="clear-history-button">Clear history</button>
+    </div>
+    <div class="hint">
+      History stays until the user clears site data or taps “Clear history”.
+    </div>
+    <div id="history-list" class="history-list"></div>
+  </div>
+
+  <script>
+    const tarotDeck = [
+      // ========= MAJOR ARCANA =========
+      {
+        name: "The Fool",
+        upright: {
+          general: "New beginnings, trust, taking a leap into the unknown.",
+          prediction: "A fresh start is approaching — this may be a new job, relationship, move or life chapter you didn’t fully plan. Saying yes to something new brings growth."
+        },
+        reversed: {
+          general: "Hesitation, poor judgment, fear of change, carelessness.",
+          prediction: "You might feel stuck between staying safe and taking a risk. Rushing in blindly could cause problems in work or love, so pause and think before leaping."
+        }
+      },
+      {
+        name: "The Magician",
+        upright: {
+          general: "Manifestation, personal power, skill, focused intention.",
+          prediction: "You have what you need to create change. A project, business idea or career move has strong potential if you stay focused and confident."
+        },
+        reversed: {
+          general: "Manipulation, scattered energy, untapped potential.",
+          prediction: "Someone may not be fully honest — this could be you doubting yourself or another person hiding the truth. Double-check agreements and motives."
+        }
+      },
+      {
+        name: "The High Priestess",
+        upright: {
+          general: "Intuition, inner knowing, mystery, the subconscious.",
+          prediction: "Answers will come from listening within rather than chasing them outside. A hidden truth in your love life or work situation may soon be revealed."
+        },
+        reversed: {
+          general: "Blocked intuition, ignoring inner voice, secrets kept.",
+          prediction: "You may be second-guessing your instincts or relying too much on others’ opinions. Delays or confusion lift once you slow down and trust your inner sense."
+        }
+      },
+      {
+        name: "The Empress",
+        upright: {
+          general: "Nurturing, abundance, fertility, comfort, creativity.",
+          prediction: "Love, support and emotional warmth grow stronger. Relationships can become more secure, and creative or financial projects may start to flourish."
+        },
+        reversed: {
+          general: "Stagnation, dependence, smothering energy, insecurity.",
+          prediction: "You might feel unappreciated or creatively blocked. A close relationship could need more balance and self-care from you, not just giving to others."
+        }
+      },
+      {
+        name: "The Emperor",
+        upright: {
+          general: "Authority, structure, stability, leadership, discipline.",
+          prediction: "A situation in career, finances or home life becomes more stable. A figure of authority or a reliable partner may help you build long-term security."
+        },
+        reversed: {
+          general: "Control issues, rigidity, domination, stubbornness.",
+          prediction: "Someone (possibly a boss, parent or partner) may be over-controlling or hard to please. You may need to set firm boundaries and stand up for yourself."
+        }
+      },
+      {
+        name: "The Hierophant",
+        upright: {
+          general: "Tradition, guidance, learning, spiritual or social rules.",
+          prediction: "Support from a mentor, teacher or community can help you now. Commitment, such as formalizing a relationship or starting study, may be highlighted."
+        },
+        reversed: {
+          general: "Breaking with tradition, rebellion, personal beliefs.",
+          prediction: "You may feel pulled away from old expectations. Choosing your own path in love, work or spirituality could be uncomfortable but ultimately freeing."
+        }
+      },
+      {
+        name: "The Lovers",
+        upright: {
+          general: "Love, harmony, union, important choices, alignment.",
+          prediction: "A key relationship can deepen, or a meaningful connection may arrive. You may face an important choice that aligns your heart with your long-term path."
+        },
+        reversed: {
+          general: "Imbalance, disharmony, misalignment, difficult choices.",
+          prediction: "Tension or confusion in love or close partnerships may rise. A decision that’s been avoided needs honesty, or you risk staying in something that drains you."
+        }
+      },
+      {
+        name: "The Chariot",
+        upright: {
+          general: "Willpower, determination, victory, moving forward.",
+          prediction: "Progress is possible if you stay focused. You may overcome a challenge, successfully move, travel, or take a bold step in your career or plans."
+        },
+        reversed: {
+          general: "Lack of direction, aggression, scattered energy.",
+          prediction: "You may feel pulled in different directions. Pushing too hard or reacting out of frustration could cause delays, especially in career or travel plans."
+        }
+      },
+      {
+        name: "Strength",
+        upright: {
+          general: "Inner strength, courage, patience, gentle power.",
+          prediction: "You’ll find the inner courage to face a challenge. A relationship can grow stronger as you respond with calm and compassion instead of force."
+        },
+        reversed: {
+          general: "Self-doubt, low confidence, feeling drained.",
+          prediction: "You may doubt your ability to handle something. Rest, self-kindness and small steps will help your confidence return and improve your connections."
+        }
+      },
+      {
+        name: "The Hermit",
+        upright: {
+          general: "Introspection, solitude, inner wisdom, reflection.",
+          prediction: "You may step back from noise and drama to think clearly. Time alone leads to a wise decision about love, career or your next life direction."
+        },
+        reversed: {
+          general: "Isolation, loneliness, avoiding inner work.",
+          prediction: "You might feel cut off or misunderstood. Reaching out to someone you trust or gently opening up can help restore balance and perspective."
+        }
+      },
+      {
+        name: "Wheel of Fortune",
+        upright: {
+          general: "Change, cycles, luck, destiny, turning point.",
+          prediction: "A positive shift is likely. This can bring new opportunities in work, money or love, sometimes suddenly or in an unexpected way."
+        },
+        reversed: {
+          general: "Delays, resistance to change, feeling unlucky.",
+          prediction: "Plans may stall or not go as expected. This phase is temporary; staying flexible helps you move through it toward better conditions."
+        }
+      },
+      {
+        name: "Justice",
+        upright: {
+          general: "Truth, fairness, balance, accountability, cause and effect.",
+          prediction: "A decision or agreement may go fairly for you, especially around contracts, legal matters or relationship discussions, if you remain honest and balanced."
+        },
+        reversed: {
+          general: "Injustice, dishonesty, imbalance, avoidance of truth.",
+          prediction: "You could feel something is unfair or that someone isn’t owning their part. Clarifying facts and standing up for yourself brings eventual correction."
+        }
+      },
+      {
+        name: "The Hanged Man",
+        upright: {
+          general: "Pause, surrender, new perspective, letting go.",
+          prediction: "Progress may slow, but this pause lets you see things differently. A shift in viewpoint about love, work or a personal issue leads to better choices."
+        },
+        reversed: {
+          general: "Stagnation, indecision, resisting necessary change.",
+          prediction: "You may feel stuck because you’re holding onto old expectations. Once you release what no longer works, movement returns."
+        }
+      },
+      {
+        name: "Death",
+        upright: {
+          general: "Transformation, endings, rebirth, deep change.",
+          prediction: "A chapter is closing — this might be a job, habit, or relationship pattern. Although it may feel intense, it makes space for a more authentic future."
+        },
+        reversed: {
+          general: "Resisting endings, fear of change, clinging on.",
+          prediction: "You may be holding onto something that’s already fading. Accepting the transition, even slowly, will bring relief and new possibilities."
+        }
+      },
+      {
+        name: "Temperance",
+        upright: {
+          general: "Balance, moderation, healing, patience, harmony.",
+          prediction: "Life can become more balanced. Conflicts calm down, health or emotional issues improve, and a steady, peaceful rhythm returns to daily life."
+        },
+        reversed: {
+          general: "Excess, imbalance, impatience, extremes.",
+          prediction: "You may be swinging between extremes — in emotions, spending or work. Gentle adjustments bring better long-term results than all-or-nothing choices."
+        }
+      },
+      {
+        name: "The Devil",
+        upright: {
+          general: "Attachment, temptation, addiction, feeling trapped.",
+          prediction: "A pattern in love, money or habits could feel controlling or hard to break. Recognising where you feel chained is the first step toward freedom."
+        },
+        reversed: {
+          general: "Releasing limitations, breaking free, reclaiming power.",
+          prediction: "You may finally step away from a toxic situation, unhealthy habit or one-sided connection, leading to more self-respect and emotional space."
+        }
+      },
+      {
+        name: "The Tower",
+        upright: {
+          general: "Sudden change, disruption, revelations, upheaval.",
+          prediction: "An unexpected event or truth may shake current plans — in work, home or relationships. Although unsettling, it clears what was unstable or untrue."
+        },
+        reversed: {
+          general: "Avoiding necessary change, tension, slow collapse.",
+          prediction: "You might sense something is ‘about to give’ but keep postponing action. Facing the issue directly can prevent a larger disruption later."
+        }
+      },
+      {
+        name: "The Star",
+        upright: {
+          general: "Hope, inspiration, healing, renewal, faith.",
+          prediction: "A hopeful phase begins. Emotional or physical healing improves, and you may receive encouragement, support or a sign that you’re on the right path."
+        },
+        reversed: {
+          general: "Doubt, discouragement, feeling disconnected.",
+          prediction: "You may feel low or question if things will improve. Small signs of progress and self-care will rebuild your confidence more than you expect."
+        }
+      },
+      {
+        name: "The Moon",
+        upright: {
+          general: "Intuition, dreams, illusions, the unknown, confusion.",
+          prediction: "Things may not be what they seem. Important information around a situation or relationship will reveal itself gradually, so avoid snap judgments."
+        },
+        reversed: {
+          general: "Clarity emerging, fears easing, secrets revealed.",
+          prediction: "Confusion lifts, and you begin to see the truth of a person or situation. This may influence a decision in love, family or career."
+        }
+      },
+      {
+        name: "The Sun",
+        upright: {
+          general: "Joy, success, warmth, vitality, positivity.",
+          prediction: "A happy period is coming. Achievements, happier relationships, or good news around family, health or money are likely."
+        },
+        reversed: {
+          general: "Temporary setback, mild sadness, blocked joy.",
+          prediction: "You might feel drained or less optimistic, but this is temporary. A small shift in focus or routine can bring your energy back."
+        }
+      },
+      {
+        name: "Judgement",
+        upright: {
+          general: "Awakening, reflection, renewal, evaluation.",
+          prediction: "You may make an important life decision — such as changing work, reviving a dream, or moving on from the past — based on lessons learned."
+        },
+        reversed: {
+          general: "Self-doubt, avoidance, harsh self-judgment.",
+          prediction: "You may be too hard on yourself or hesitant to act. Accepting past choices and forgiving yourself opens the door for new opportunities."
+        }
+      },
+      {
+        name: "The World",
+        upright: {
+          general: "Completion, fulfillment, achievement, wholeness.",
+          prediction: "A long phase or goal reaches completion: finishing studies, a project, or a major personal chapter. Travel or expansion may be ahead."
+        },
+        reversed: {
+          general: "Lack of closure, delays, feeling incomplete.",
+          prediction: "You may sense something unfinished in a relationship, project or emotional chapter. Addressing loose ends helps you move forward fully."
+        }
+      },
+
+      // ========= WANDS =========
+      {
+        name: "Ace of Wands",
+        upright: {
+          general: "New inspiration, creative spark, fresh opportunity.",
+          prediction: "A new idea or opportunity in work, creativity or passion may appear soon. Taking initiative now can lead to exciting developments."
+        },
+        reversed: {
+          general: "Blocked inspiration, delays, lack of direction.",
+          prediction: "Projects may feel slow or uninspiring. Stepping back to reconnect with what truly excites you helps energy return."
+        }
+      },
+      {
+        name: "Two of Wands",
+        upright: {
+          general: "Planning, looking ahead, considering options.",
+          prediction: "You may be choosing between staying where you are or expanding — a move, travel, or new job path could be on the horizon."
+        },
+        reversed: {
+          general: "Fear of change, limited thinking, holding back.",
+          prediction: "You may hesitate to leave your comfort zone, even if things feel stagnant. Taking one small step forward brings more clarity."
+        }
+      },
+      {
+        name: "Three of Wands",
+        upright: {
+          general: "Expansion, progress, waiting for results.",
+          prediction: "Efforts you’ve already made can start to pay off. News, opportunities or growth from earlier actions may arrive soon."
+        },
+        reversed: {
+          general: "Delays, frustration, limited progress.",
+          prediction: "Plans may not move as quickly as hoped, especially in travel, relocation or projects. Adjusting your strategy will help."
+        }
+      },
+      {
+        name: "Four of Wands",
+        upright: {
+          general: "Celebration, home, stability, community, harmony.",
+          prediction: "You may experience a happy event — reunion, celebration, home improvement, or milestone in a relationship or family situation."
+        },
+        reversed: {
+          general: "Tension at home, instability, disrupted plans.",
+          prediction: "Plans around home or family might feel unsettled or delayed. Honest conversations can restore a sense of security over time."
+        }
+      },
+      {
+        name: "Five of Wands",
+        upright: {
+          general: "Conflict, competition, disagreements, tension.",
+          prediction: "Minor conflicts or competition at work, in groups, or in love may arise. Healthy communication and compromise can prevent bigger issues."
+        },
+        reversed: {
+          general: "Avoiding conflict, inner tension, resolution.",
+          prediction: "You might be tired of drama and ready to walk away from arguments. Letting go of ego helps disputes calm down."
+        }
+      },
+      {
+        name: "Six of Wands",
+        upright: {
+          general: "Victory, progress, public recognition.",
+          prediction: "You may receive praise, success or a small victory soon — such as good feedback, an achievement, or feeling proud of yourself."
+        },
+        reversed: {
+          general: "Self-doubt, lack of recognition, setbacks.",
+          prediction: "You might feel unseen or underappreciated. This phase encourages you to recognise your own progress, even if others don’t yet."
+        }
+      },
+      {
+        name: "Seven of Wands",
+        upright: {
+          general: "Defensiveness, standing your ground, perseverance.",
+          prediction: "You may need to protect your boundaries or beliefs. Staying firm but calm helps you maintain your position in work or relationships."
+        },
+        reversed: {
+          general: "Overwhelm, giving up, feeling attacked.",
+          prediction: "A situation may feel like too much. Choosing your battles and seeking support prevents burnout."
+        }
+      },
+      {
+        name: "Eight of Wands",
+        upright: {
+          general: "Fast movement, communication, progress, momentum.",
+          prediction: "Messages, travel or rapid changes may soon speed up events in your love life, work or plans. Things suddenly move forward."
+        },
+        reversed: {
+          general: "Delays, miscommunication, scattered energy.",
+          prediction: "Travel or plans could be delayed, or messages may be unclear. Double-check details to avoid confusion."
+        }
+      },
+      {
+        name: "Nine of Wands",
+        upright: {
+          general: "Resilience, persistence, near completion.",
+          prediction: "You are closer to a breakthrough than you realise. Though tired, one final push or boundary can protect what you’ve worked for."
+        },
+        reversed: {
+          general: "Exhaustion, defensiveness, wanting to give up.",
+          prediction: "You may feel worn out by ongoing stress. Rest and support are more useful now than forcing yourself alone."
+        }
+      },
+      {
+        name: "Ten of Wands",
+        upright: {
+          general: "Burdens, heavy workload, responsibility.",
+          prediction: "You may be carrying too much — extra duties, emotional weight or obligations. Delegating or saying no will ease the pressure."
+        },
+        reversed: {
+          general: "Releasing burdens, overwhelm, needing help.",
+          prediction: "You might be ready to put down what isn’t yours to carry. Letting go of one major responsibility or expectation brings relief."
+        }
+      },
+      {
+        name: "Page of Wands",
+        upright: {
+          general: "Excitement, exploration, new ideas, enthusiasm.",
+          prediction: "A message, invite or idea could spark adventure, learning or creativity. Saying yes to learning or travel brings growth."
+        },
+        reversed: {
+          general: "Restlessness, lack of direction, inconsistency.",
+          prediction: "You might feel eager for change but unsure where to start. Take one small, practical step instead of waiting for perfect conditions."
+        }
+      },
+      {
+        name: "Knight of Wands",
+        upright: {
+          general: "Action, passion, bold moves, adventure.",
+          prediction: "Energy rises. There may be travel, passion in love, or a bold career move. Acting confidently brings opportunities, if you avoid impulsiveness."
+        },
+        reversed: {
+          general: "Recklessness, impatience, scattered focus.",
+          prediction: "Rushing into decisions — especially in love or spending — could create chaos. Slow down and review before committing."
+        }
+      },
+      {
+        name: "Queen of Wands",
+        upright: {
+          general: "Confidence, charisma, independence, warmth.",
+          prediction: "You may step into a more confident phase. People are drawn to you, improving your social life, romance or leadership role."
+        },
+        reversed: {
+          general: "Insecurity, jealousy, hidden frustration.",
+          prediction: "You might compare yourself to others or doubt your attractiveness or talents. Focusing on your own strengths shifts this energy."
+        }
+      },
+      {
+        name: "King of Wands",
+        upright: {
+          general: "Vision, leadership, long-term plans, influence.",
+          prediction: "A strong opportunity to lead or grow appears — starting a project, business or taking charge in life. A confident, passionate person may support you."
+        },
+        reversed: {
+          general: "Dominance, impatience, unrealistic expectations.",
+          prediction: "You or someone around you may push too hard. Adjusting plans and listening to others’ input prevents burnout or conflict."
+        }
+      },
+
+      // ========= CUPS =========
+      {
+        name: "Ace of Cups",
+        upright: {
+          general: "New emotional beginning, love, compassion, openness.",
+          prediction: "A fresh emotional chapter is opening — a new relationship, deeper intimacy, or renewed self-love may enter your life."
+        },
+        reversed: {
+          general: "Blocked emotions, emptiness, emotional fatigue.",
+          prediction: "You may feel closed off or drained. Gentle healing, rest and honest feelings will slowly refill your emotional cup."
+        }
+      },
+      {
+        name: "Two of Cups",
+        upright: {
+          general: "Partnership, mutual attraction, emotional connection.",
+          prediction: "A relationship can deepen or a new meaningful bond may arrive. This card often points to mutual feelings and balanced connection."
+        },
+        reversed: {
+          general: "Imbalance, tension, misunderstanding in relationships.",
+          prediction: "There may be miscommunication or a temporary disconnect with someone important. Honest talk can bring the bond back into balance."
+        }
+      },
+      {
+        name: "Three of Cups",
+        upright: {
+          general: "Friendship, celebration, support, community.",
+          prediction: "You may enjoy gatherings, fun times with friends, or supportive community energy. Good news or something to celebrate could arrive."
+        },
+        reversed: {
+          general: "Overindulgence, gossip, social fatigue.",
+          prediction: "Too much social noise, mixed messages or gossip could drain you. Choosing healthier environments or quieter time restores balance."
+        }
+      },
+      {
+        name: "Four of Cups",
+        upright: {
+          general: "Apathy, contemplation, feeling disconnected.",
+          prediction: "You may feel bored or emotionally flat, even if opportunities exist. A new offer in love or life might be easy to overlook if you stay turned inward only."
+        },
+        reversed: {
+          general: "New interest, emotional reawakening, renewed focus.",
+          prediction: "Your motivation can return, bringing new options in relationships, hobbies or career that feel more aligned."
+        }
+      },
+      {
+        name: "Five of Cups",
+        upright: {
+          general: "Regret, grief, focusing on loss.",
+          prediction: "You may be dwelling on what went wrong in a relationship or situation. Over time, you will see what remains and can still be built upon."
+        },
+        reversed: {
+          general: "Acceptance, forgiveness, moving on.",
+          prediction: "Healing progresses. You may feel ready to release past hurt, opening the door to new emotional experiences or connections."
+        }
+      },
+      {
+        name: "Six of Cups",
+        upright: {
+          general: "Nostalgia, memories, innocence, past connections.",
+          prediction: "Someone or something from your past may resurface — an old friend, lover, place or childhood interest — bringing warmth or closure."
+        },
+        reversed: {
+          general: "Living in the past, clinging to old stories.",
+          prediction: "You might idealise the past or compare the present to ‘better times’. Accepting where you are now allows new joy to grow."
+        }
+      },
+      {
+        name: "Seven of Cups",
+        upright: {
+          general: "Many options, fantasy, daydreaming, choices.",
+          prediction: "You may face tempting options in love, career or lifestyle. Taking time to see what’s realistic prevents confusion or disappointment."
+        },
+        reversed: {
+          general: "Clarity, focused decision, narrowing choices.",
+          prediction: "Illusions begin to clear. You may finally choose one path, relationship or plan, bringing a sense of direction."
+        }
+      },
+      {
+        name: "Eight of Cups",
+        upright: {
+          general: "Walking away, seeking deeper meaning, transition.",
+          prediction: "You may decide to step away from something unfulfilling — a job, habit, or connection — to search for more emotional truth or satisfaction."
+        },
+        reversed: {
+          general: "Fear of leaving, stagnation, drifting.",
+          prediction: "You might feel stuck in a situation you’ve outgrown but hesitate to leave. Small steps toward what you truly want will help you move forward."
+        }
+      },
+      {
+        name: "Nine of Cups",
+        upright: {
+          general: "Contentment, wish fulfillment, emotional satisfaction.",
+          prediction: "A wish or long-held desire may be granted soon. You could enjoy a comfortable period in love, home, or personal pleasures."
+        },
+        reversed: {
+          general: "Superficial satisfaction, overindulgence, emptiness.",
+          prediction: "Something that once seemed satisfying may no longer feel enough. Adjusting your goals to include deeper meaning brings more lasting joy."
+        }
+      },
+      {
+        name: "Ten of Cups",
+        upright: {
+          general: "Emotional fulfillment, harmony, family, long-term love.",
+          prediction: "A relationship or family situation can move toward greater harmony. This is a strong sign for strengthening bonds or long-term emotional security."
+        },
+        reversed: {
+          general: "Strained relationships, disharmony, unmet expectations.",
+          prediction: "Tension in home or close connections may surface. Honest conversations and realistic expectations can slowly restore peace."
+        }
+      },
+      {
+        name: "Page of Cups",
+        upright: {
+          general: "Emotional messages, creativity, sensitivity, curiosity.",
+          prediction: "A message of affection, apology or invitation may appear. New romantic interest or creative inspiration could gently enter your life."
+        },
+        reversed: {
+          general: "Emotional immaturity, insecurity, disappointment.",
+          prediction: "Someone may react childishly or avoid expressing true feelings. Patience and clear boundaries are important now."
+        }
+      },
+      {
+        name: "Knight of Cups",
+        upright: {
+          general: "Romance, charm, following the heart, idealism.",
+          prediction: "Romantic energy or a heartfelt proposal could appear — in love, creative plans or emotional conversations. A charming person may play a role."
+        },
+        reversed: {
+          general: "Moodiness, unrealistic expectations, jealousy.",
+          prediction: "Fluctuating emotions or promises that are not followed through may cause confusion in relationships. Grounding and clarity are needed."
+        }
+      },
+      {
+        name: "Queen of Cups",
+        upright: {
+          general: "Compassion, intuition, emotional stability, empathy.",
+          prediction: "You may become more emotionally intuitive or attract someone nurturing and understanding. This is supportive for healing and deepening bonds."
+        },
+        reversed: {
+          general: "Overwhelm, emotional dependence, sensitivity.",
+          prediction: "You might feel overly affected by others’ moods or needs. Protecting your emotional space helps you regain balance."
+        }
+      },
+      {
+        name: "King of Cups",
+        upright: {
+          general: "Emotional balance, maturity, diplomacy, calm.",
+          prediction: "A calm, emotionally steady energy enters — this may be you growing more balanced, or someone reliable guiding you through a sensitive situation."
+        },
+        reversed: {
+          general: "Emotional manipulation, withdrawal, mood swings.",
+          prediction: "Someone may seem distant or emotionally controlling. Clear communication and healthy boundaries are essential."
+        }
+      },
+
+      // ========= SWORDS =========
+      {
+        name: "Ace of Swords",
+        upright: {
+          general: "Breakthrough, clarity, truth, new ideas.",
+          prediction: "A key insight, conversation or piece of information can cut through confusion, helping you make a clear decision in work or relationships."
+        },
+        reversed: {
+          general: "Confusion, miscommunication, unclear thinking.",
+          prediction: "Messages may be mixed or facts missing. Wait for more information before making big choices."
+        }
+      },
+      {
+        name: "Two of Swords",
+        upright: {
+          general: "Indecision, stalemate, difficult choice.",
+          prediction: "You may avoid choosing between two options or people. Eventually, you will need to decide, but taking time to think is okay for now."
+        },
+        reversed: {
+          general: "Information coming to light, decision made.",
+          prediction: "New insight or external events may push you to choose. Once you decide, tension eases."
+        }
+      },
+      {
+        name: "Three of Swords",
+        upright: {
+          general: "Heartbreak, separation, emotional pain.",
+          prediction: "You may process sadness, disappointment or a painful truth in love or life. Acknowledging the hurt is the start of healing."
+        },
+        reversed: {
+          general: "Recovery, forgiveness, letting go of pain.",
+          prediction: "The worst of a painful situation may be passing. You’re encouraged to release bitterness and allow your heart to mend."
+        }
+      },
+      {
+        name: "Four of Swords",
+        upright: {
+          general: "Rest, recovery, reflection, mental break.",
+          prediction: "A pause or rest period will restore your energy. This could be time off, quiet days, or stepping back from conflict or stress."
+        },
+        reversed: {
+          general: "Restlessness, burnout, ignoring need for rest.",
+          prediction: "You might be pushing yourself too hard mentally or emotionally. Ignoring signs of exhaustion could slow you more later."
+        }
+      },
+      {
+        name: "Five of Swords",
+        upright: {
+          general: "Conflict, winning at a cost, tension, ego clashes.",
+          prediction: "Arguments or power struggles may leave a sour feeling, even if you ‘win’. Choosing peace over proving a point avoids regret."
+        },
+        reversed: {
+          general: "Reconciliation, moving on from conflict.",
+          prediction: "You may seek resolution after an argument or stressful situation. Apologies, compromises or distance can help restore peace."
+        }
+      },
+      {
+        name: "Six of Swords",
+        upright: {
+          general: "Transition, moving on, travelling to calmer waters.",
+          prediction: "You may slowly move away from stress — mentally or literally. This could involve travel, a move, or emotional healing after a tough time."
+        },
+        reversed: {
+          general: "Difficulty moving on, feeling stuck in the past.",
+          prediction: "Old memories or unresolved issues may hold you back. Facing what still hurts and seeking support will help you cross this bridge."
+        }
+      },
+      {
+        name: "Seven of Swords",
+        upright: {
+          general: "Strategy, secrecy, acting alone, deception.",
+          prediction: "Someone may not be fully open — this could be subtle avoidance or hidden motives. Use discernment in agreements or trust matters."
+        },
+        reversed: {
+          general: "Truth revealed, confession, getting caught.",
+          prediction: "A hidden matter is likely to come to light. Honest communication, even if uncomfortable, can clean up lingering tension."
+        }
+      },
+      {
+        name: "Eight of Swords",
+        upright: {
+          general: "Feeling trapped, limited, overshadowed by fear.",
+          prediction: "You may feel stuck by circumstances or your own thoughts. A small shift in perspective or asking for help can reveal new options."
+        },
+        reversed: {
+          general: "Releasing restrictions, new perspective, freedom.",
+          prediction: "You may begin freeing yourself from limiting beliefs or a restrictive situation, gradually reclaiming your confidence."
+        }
+      },
+      {
+        name: "Nine of Swords",
+        upright: {
+          general: "Anxiety, worry, sleepless nights, overthinking.",
+          prediction: "Stress about a relationship, money or future may weigh on your mind. Sharing your worries or getting practical advice can ease this load."
+        },
+        reversed: {
+          general: "Lessening worry, facing fears, healing.",
+          prediction: "Anxious thoughts may slowly calm as you address the root of your concerns. Support, therapy or talking honestly with someone helps."
+        }
+      },
+      {
+        name: "Ten of Swords",
+        upright: {
+          general: "Painful ending, betrayal, hitting rock bottom.",
+          prediction: "A difficult phase or situation may reach a clear end. Though it can feel final, it signals that the worst is over and recovery can begin."
+        },
+        reversed: {
+          general: "Recovery, regeneration, slowly rising again.",
+          prediction: "You may begin healing from a heavy loss or shock. The future gradually looks lighter than the recent past."
+        }
+      },
+      {
+        name: "Page of Swords",
+        upright: {
+          general: "Curiosity, observation, new ideas, communication.",
+          prediction: "Messages, news or research may be important. You might learn something new that changes how you view a situation."
+        },
+        reversed: {
+          general: "Gossip, defensiveness, misunderstandings.",
+          prediction: "Be cautious about rumours, online drama or hasty words. Clear communication will prevent unnecessary friction."
+        }
+      },
+      {
+        name: "Knight of Swords",
+        upright: {
+          general: "Fast action, strong opinions, direct communication.",
+          prediction: "Events may speed up. A decisive conversation or sudden change could push you toward needed action, especially in career or big decisions."
+        },
+        reversed: {
+          general: "Recklessness, impatience, harsh words.",
+          prediction: "Rushing in without thinking or speaking sharply could backfire. Slowing down and listening will avoid preventable conflict."
+        }
+      },
+      {
+        name: "Queen of Swords",
+        upright: {
+          general: "Clarity, independence, truth-telling, logic.",
+          prediction: "You may cut through confusion with honesty and directness. Setting clear boundaries improves relationships and decisions."
+        },
+        reversed: {
+          general: "Coldness, bitterness, overcritical thinking.",
+          prediction: "You or someone else may come across as distant or sharp. Softening your tone and checking assumptions restores connection."
+        }
+      },
+      {
+        name: "King of Swords",
+        upright: {
+          general: "Reason, authority, clear judgment, structure.",
+          prediction: "A decision made with logic and fairness will benefit you. An expert, advisor or disciplined attitude can help you succeed."
+        },
+        reversed: {
+          general: "Manipulative thinking, rigidity, misusing power.",
+          prediction: "Be wary of controlling behaviours or unfair rules. Speaking up or seeking a second opinion can rebalance the situation."
+        }
+      },
+
+      // ========= PENTACLES =========
+      {
+        name: "Ace of Pentacles",
+        upright: {
+          general: "New financial opportunity, stability, practical beginning.",
+          prediction: "A new job, project, purchase or money-making idea may appear. Grounded effort now can lead to long-term material security."
+        },
+        reversed: {
+          general: "Missed chances, instability, lack of planning.",
+          prediction: "You might overlook or delay a practical opportunity. Rechecking your budget, plans or commitments helps you use resources wisely."
+        }
+      },
+      {
+        name: "Two of Pentacles",
+        upright: {
+          general: "Balance, juggling responsibilities, adaptability.",
+          prediction: "You may handle multiple tasks — work, money, or home — at once. Organising your time and priorities keeps things flowing smoothly."
+        },
+        reversed: {
+          general: "Overwhelm, financial or time imbalance.",
+          prediction: "You may feel stretched thin with too much to manage. Simplifying commitments or asking for support brings relief."
+        }
+      },
+      {
+        name: "Three of Pentacles",
+        upright: {
+          general: "Teamwork, collaboration, building skills, recognition.",
+          prediction: "Working with others can bring success. You might receive positive feedback for your efforts or see progress in a long-term skill or project."
+        },
+        reversed: {
+          general: "Lack of cooperation, poor teamwork, misalignment.",
+          prediction: "Group efforts may feel disorganised. Clear roles and honest communication can rebuild cooperation."
+        }
+      },
+      {
+        name: "Four of Pentacles",
+        upright: {
+          general: "Holding on, security, saving, protecting resources.",
+          prediction: "You may focus on saving money or protecting what you have. It’s wise to be cautious, but avoid closing off from new experiences entirely."
+        },
+        reversed: {
+          general: "Letting go, generosity, loosening tight control.",
+          prediction: "You might feel ready to spend, share or relax your grip on something — money, possessions or old habits — bringing more freedom."
+        }
+      },
+      {
+        name: "Five of Pentacles",
+        upright: {
+          general: "Hardship, financial worry, feeling left out.",
+          prediction: "Concerns about money, health or support may weigh on you. Help is available, possibly through community, advice or practical changes."
+        },
+        reversed: {
+          general: "Improvement, hope, recovery from difficulty.",
+          prediction: "Slow but real progress in finances, health or stability is likely. A better opportunity or support system may appear."
+        }
+      },
+      {
+        name: "Six of Pentacles",
+        upright: {
+          general: "Giving and receiving, generosity, support, balance.",
+          prediction: "You may receive help, resources or kindness — or be in a position to help others. Fair give-and-take improves relationships and finances."
+        },
+        reversed: {
+          general: "Strings attached, inequality, selfishness.",
+          prediction: "An arrangement involving money or help may feel one-sided. Re-negotiating terms or setting boundaries restores fairness."
+        }
+      },
+      {
+        name: "Seven of Pentacles",
+        upright: {
+          general: "Patience, long-term view, slow results.",
+          prediction: "You may be waiting for results from work, study or investment. While progress is slow, your efforts are laying strong foundations."
+        },
+        reversed: {
+          general: "Impatience, lack of reward, questioning effort.",
+          prediction: "You might wonder if a job, relationship or project is worth the energy. Reassessing your investment of time and effort leads to wiser choices."
+        }
+      },
+      {
+        name: "Eight of Pentacles",
+        upright: {
+          general: "Skill-building, hard work, dedication, craftsmanship.",
+          prediction: "You may focus on learning or improving a skill, job or hobby. Consistent effort can bring mastery and better financial stability."
+        },
+        reversed: {
+          general: "Boredom, low-quality work, lack of focus.",
+          prediction: "Doing too much on autopilot may limit growth. Updating your skills or seeking more meaningful tasks improves the situation."
+        }
+      },
+      {
+        name: "Nine of Pentacles",
+        upright: {
+          general: "Independence, comfort, self-sufficiency, enjoying rewards.",
+          prediction: "You may experience a period of increased comfort — financial stability, pride in your work, or enjoying what you’ve built."
+        },
+        reversed: {
+          general: "Overdependence, setbacks, working without reward.",
+          prediction: "You might feel you’re doing a lot without seeing enough return. Adjusting goals or boundaries can bring more balance and appreciation."
+        }
+      },
+      {
+        name: "Ten of Pentacles",
+        upright: {
+          general: "Legacy, long-term security, family, wealth.",
+          prediction: "Long-term stability is highlighted — this can relate to home, family, inheritance, retirement planning or building a lasting foundation."
+        },
+        reversed: {
+          general: "Instability, family conflict, short-term focus.",
+          prediction: "Disagreements over money or future plans may arise. Honest discussion and planning support better long-term security."
+        }
+      },
+      {
+        name: "Page of Pentacles",
+        upright: {
+          general: "Study, new job, practical plans, curiosity.",
+          prediction: "A new opportunity to learn or earn may appear — a course, job, side project or financial idea that can grow over time."
+        },
+        reversed: {
+          general: "Lack of focus, procrastination, missed chances.",
+          prediction: "Delays in study or money plans may stem from distraction. Small, consistent steps forward can get you back on track."
+        }
+      },
+      {
+        name: "Knight of Pentacles",
+        upright: {
+          general: "Steady progress, reliability, routine, patience.",
+          prediction: "Slow and consistent effort will pay off. A reliable person or stable job situation may support your long-term goals."
+        },
+        reversed: {
+          general: "Stagnation, boredom, resistance to change.",
+          prediction: "Routines may feel dull or limiting. Updating your schedule or adding variety can reignite motivation without losing stability."
+        }
+      },
+      {
+        name: "Queen of Pentacles",
+        upright: {
+          general: "Practical care, nurture, security, comfort.",
+          prediction: "Home, health and finances can improve with practical steps. A caring, grounded person may offer support or you become that for yourself."
+        },
+        reversed: {
+          general: "Neglecting self-care, work–home imbalance.",
+          prediction: "You may focus on others or work while neglecting your own needs. Rebalancing priorities brings back comfort and wellbeing."
+        }
+      },
+      {
+        name: "King of Pentacles",
+        upright: {
+          general: "Stability, success, discipline, financial maturity.",
+          prediction: "Good progress is possible in career or finances. A stable job, wise planning or support from a successful person may improve your position."
+        },
+        reversed: {
+          general: "Fear of loss, stubbornness, material worry.",
+          prediction: "Over-focusing on money or status may cause stress. Flexibility and trust in your abilities will ease financial or career anxieties."
+        }
+      }
+    ];// ------------ IMAGE HANDLER ------------
+    function getImageUrl(cardName) {
+      // Convert "The Fool" → "the-fool.png"
+      return "images/" + cardName.toLowerCase().replace(/ /g, "-") + ".jpg";
+      // You can use .png or .webp — just change extension
+    }
+
+    // ------------ DRAW LOGIC ------------
+    const deckEl = document.getElementById("deck");
+    const drawBtn = document.getElementById("draw-button");
+    const statusEl = document.getElementById("status");
+
+    drawBtn.addEventListener("click", drawSpread);
+
+    function drawSpread() {
+      // Start shuffle animation
+      deckEl.classList.add("shuffling");
+      statusEl.textContent = "Shuffling cards…";
+      drawBtn.disabled = true;
+
+      setTimeout(() => {
+        performDraw();
+      }, 1400);
+    }
+
+    function performDraw() {
+      deckEl.classList.remove("shuffling");
+      statusEl.textContent = "";
+
+      const past = drawRandomCard();
+      const present = drawRandomCard();
+      const future = drawRandomCard();
+
+      displayCard(past, "past");
+      displayCard(present, "present");
+      displayCard(future, "future");
+
+      saveHistoryEntry(past, present, future);
+
+      drawBtn.disabled = false;
+    }
+
+    function drawRandomCard() {
+      const card = tarotDeck[Math.floor(Math.random() * tarotDeck.length)];
+      const isReversed = Math.random() < 0.5;
+
+      return {
+        name: card.name,
+        position: isReversed ? "Reversed" : "Upright",
+        meaning: isReversed ? card.reversed.general : card.upright.general,
+        prediction: isReversed ? card.reversed.prediction : card.upright.prediction,
+        image: getImageUrl(card.name)
+      };
+    }
+
+    function displayCard(card, slot) {
+      document.getElementById(slot + "-image").src = card.image;
+      document.getElementById(slot + "-name").textContent = card.name;
+      document.getElementById(slot + "-position").textContent = card.position;
+      document.getElementById(slot + "-meaning").textContent = card.meaning;
+      document.getElementById(slot + "-narrative").textContent = card.prediction;
+    }
+
+
+    // ------------ HISTORY SYSTEM ------------
+    const historyListEl = document.getElementById("history-list");
+    const clearHistoryBtn = document.getElementById("clear-history-button");
+
+    clearHistoryBtn.addEventListener("click", () => {
+      localStorage.removeItem("tarotHistory");
+      historyListEl.innerHTML = "";
+    });
+
+    function saveHistoryEntry(past, present, future) {
+      let history = JSON.parse(localStorage.getItem("tarotHistory") || "[]");
+
+      const entry = {
+        timestamp: new Date().toISOString(),
+        past,
+        present,
+        future
+      };
+
+      history.unshift(entry);
+
+      // Keep max 50 readings
+      if (history.length > 50) history.pop();
+
+      localStorage.setItem("tarotHistory", JSON.stringify(history));
+
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyListEl.innerHTML = "";
+
+      const history = JSON.parse(localStorage.getItem("tarotHistory") || "[]");
+
+      history.forEach(entry => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+
+        item.innerHTML = `
+          <div class="history-header">
+            ${new Date(entry.timestamp).toLocaleString()}
+          </div>
+          <div class="history-body">
+            <strong>Past:</strong> <span class="position">${entry.past.position}</span> — ${entry.past.name}<br>
+            <strong>Present:</strong> <span class="position">${entry.present.position}</span> — ${entry.present.name}<br>
+            <strong>Future:</strong> <span class="position">${entry.future.position}</span> — ${entry.future.name}
+          </div>
+        `;
+
+        historyListEl.appendChild(item);
+      });
+    }
+
+    // Load history at start
+    renderHistory();
+
+
+    // ------------ PWA SERVICE WORKER ------------
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .catch(err => console.log("SW registration failed:", err));
+    }
+  </script>
+</body>
+</html>
