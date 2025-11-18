@@ -1,0 +1,25 @@
+{
+  "name": "Tarot App",
+  "short_name": "Tarot",
+  "id": "tarot-app-v1",
+  "start_url": "/tarot-app/",
+  "scope": "/tarot-app/",
+  "display": "standalone",
+  "background_color": "#4c1d95",
+  "theme_color": "#4c1d95",
+
+  "icons": [
+    {
+      "src": "images/card-back.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/card-back.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+
+  "description": "A Tarot Reader PWA that draws Past, Present and Future cards with upright and reversed meanings."
+}
